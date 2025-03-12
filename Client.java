@@ -12,10 +12,12 @@ public class Client {
         BufferedReader entrada = new BufferedReader(new InputStreamReader(miSocket.getInputStream()));
         PrintWriter salida = new PrintWriter(miSocket.getOutputStream(), true);
         Scanner scanner = new Scanner(System.in)) {
-            System.out.println("Conectado al servidor");
+            System.out.println("Conectandose al servidor, por favor ingrese su nombre de cliente: ");
+            String nombreCliente = scanner.nextLine();
+            salida.println(nombreCliente);
 
             while (true) {
-                System.out.println("Ingrese comando para tipo saludo (Bienvenida/Despedida <nombre-cliente>)");
+                System.out.println("Ingrese comando para tipo saludo (Bienvenida/Despedida <nombre-cliente>) o si quiere salir (Exit)");
                 String comando = scanner.nextLine();
 
                 salida.println(comando);
@@ -24,6 +26,10 @@ public class Client {
                     manejadorBienvenida(entrada);
                 }else if (comando.startsWith("Despedida")){
                     manejadorDespedida(entrada);
+                }else if(comando.startsWith("Exit")){
+                    manejadorSalida(entrada, miSocket);
+                    System.out.println("Desconectando del servidor");
+                    break;
                 }else{
                     String respuesta = entrada.readLine();
                     if(respuesta != null){
@@ -59,6 +65,19 @@ public class Client {
                 System.out.println(line);
             }
         }       
+    }
+
+    private static void manejadorSalida(BufferedReader entrada, Socket miSocket)throws IOException{
+        String line;
+        while ((line = entrada.readLine()) != null) {
+            if(line.equals("EOF")){
+                break;
+            } else{
+                System.out.println(line);
+            }
+        }
+        miSocket.close();
+        
     }
 
 }
