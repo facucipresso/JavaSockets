@@ -11,6 +11,7 @@ import java.io.*;
 public class Server {
     
     static ConcurrentHashMap<String, String> clientes = new ConcurrentHashMap<>();
+    static ConcurrentHashMap<String, PrintWriter> clientesSalida = new ConcurrentHashMap<>();
     //static List<String> clientes = new ArrayList<>();
     public static void main(String[] args) {
 
@@ -37,9 +38,11 @@ public class Server {
     private static class ClientHandler implements Runnable {
     
         private Socket clientSocket;
+        private ConcurrentHashMap<String, String> clientes;
 
         public ClientHandler(Socket socketCliente, ConcurrentHashMap <String, String> clientes){
             clientSocket = socketCliente;
+            this.clientes = clientes;
         }
 
         public void run(){
@@ -49,9 +52,13 @@ public class Server {
                     
                 String nombreCliente = entrada.readLine();
                 String idCliente = clientSocket.getInetAddress().toString() + ":" + clientSocket.getPort();
+
                 System.out.println("Hola "+ nombreCliente + " como estas?");
                 System.out.println("Tu identificador de cliente es: "+ idCliente);
+
                 clientes.put(idCliente, nombreCliente);
+                clientesSalida.put(idCliente, salida);
+
                 mostrarClientes(clientes);
                 
 
@@ -67,8 +74,10 @@ public class Server {
                         fbienvenida(comando, salida);
                     }else if( comando.startsWith("Despedida")){
                         fdespedida(comando, salida);
+                    }else if(comando.startsWith("Broadcast")){
+                        handlerBroadcast(comando, clientes, idCliente, salida);
                     }else if(comando.startsWith("Exit")){
-                        handlerSalida(salida, clientes, idCliente);
+                        handlerSalida(salida, clientes, clientesSalida,idCliente);
                         break;
                     }else{
                         salida.println("Tipo de saludo no reconocido");
@@ -110,12 +119,25 @@ public class Server {
             }
             System.out.println("----------------------------------------------");
         }
-        private void handlerSalida(PrintWriter salida, ConcurrentHashMap<String, String> clientes, String idCliente)throws IOException{
+        private void handlerSalida(PrintWriter salida, ConcurrentHashMap<String, String> clientes, ConcurrentHashMap<String, PrintWriter> clientesSalida, String idCliente)throws IOException{
             salida.println("Cerrando conexion con el cliente");
             salida.println("EOF");
             clientes.remove(idCliente);
+            clientesSalida.remove(idCliente);
             clientSocket.close();
             mostrarClientes(clientes);
+        }
+
+        private void handlerBroadcast(String comando, ConcurrentHashMap<String, String> clientes, String idCliente, PrintWriter salida){
+            String [] divisionComando = comando.split(" ", 2);
+            String mensaje = divisionComando[1];
+            String remitente = clientes.get(idCliente);
+            for(Map.Entry<String, PrintWriter> entry : clientesSalida.entrySet()){
+                if(!entry.getKey().equals(idCliente)){
+                    entry.getValue().println("Broadcast de "+ remitente + ": "+mensaje);    
+                }
+                
+            }
         }
     }
 }

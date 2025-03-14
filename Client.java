@@ -5,19 +5,23 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Client {
+public class Client{
 
     public static void main(String[] args) throws IOException {
         try(Socket miSocket = new Socket("localhost", 4999);
         BufferedReader entrada = new BufferedReader(new InputStreamReader(miSocket.getInputStream()));
         PrintWriter salida = new PrintWriter(miSocket.getOutputStream(), true);
         Scanner scanner = new Scanner(System.in)) {
+
             System.out.println("Conectandose al servidor, por favor ingrese su nombre de cliente: ");
             String nombreCliente = scanner.nextLine();
             salida.println(nombreCliente);
 
+            Thread hiloEscucha = new Thread(new BroadcastHandler(miSocket));
+            hiloEscucha.start();
+
             while (true) {
-                System.out.println("Ingrese comando para tipo saludo (Bienvenida/Despedida <nombre-cliente>) o si quiere salir (Exit)");
+                System.out.println("Ingrese comando:\n -Bienvenida/Despedida <nombre-cliente>\n -Broadcast <mensaje>\n -Exit (si quiere salir)");
                 String comando = scanner.nextLine();
 
                 salida.println(comando);
@@ -26,6 +30,8 @@ public class Client {
                     manejadorBienvenida(entrada);
                 }else if (comando.startsWith("Despedida")){
                     manejadorDespedida(entrada);
+                }else if(comando.startsWith("Broadcast")){
+                    manejadorBroadcast(comando);
                 }else if(comando.startsWith("Exit")){
                     manejadorSalida(entrada, miSocket);
                     System.out.println("Desconectando del servidor");
@@ -42,6 +48,36 @@ public class Client {
             
         } catch (Exception e) {
             System.err.println("Error al crear el cliente" + e.getMessage());
+        }
+    }
+
+    private static class BroadcastHandler implements Runnable{
+
+        private BufferedReader entrada;
+
+        public BroadcastHandler(Socket clientSocket){
+            try {
+                this.entrada = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+        @Override
+        public void run(){
+            try{
+                String serverMensaje;
+            
+                while ((serverMensaje = entrada.readLine()) != null) {
+                    System.out.println(serverMensaje);
+                }
+                
+            } catch (Exception e) {
+                System.err.println(e);
+            }
+            
+            
+            
         }
     }
 
@@ -78,6 +114,12 @@ public class Client {
         }
         miSocket.close();
         
+    }
+
+    private static void manejadorBroadcast(String comando){
+        String [] divisionComando = comando.split(" ", 2);
+        String mensaje = divisionComando[1];
+
     }
 
 }
