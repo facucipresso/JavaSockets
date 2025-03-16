@@ -75,7 +75,9 @@ public class Server {
                     }else if( comando.startsWith("Despedida")){
                         fdespedida(comando, salida);
                     }else if(comando.startsWith("Broadcast")){
-                        handlerBroadcast(comando, clientes, idCliente, salida);
+                        handlerBroadcast(comando, clientes, idCliente, salida, clientesSalida);
+                    }else if(comando.startsWith("Privado")){
+                        handlerPrivado(comando, clientes, idCliente, salida, clientesSalida);
                     }else if(comando.startsWith("Exit")){
                         handlerSalida(salida, clientes, clientesSalida,idCliente);
                         break;
@@ -128,16 +130,38 @@ public class Server {
             mostrarClientes(clientes);
         }
 
-        private void handlerBroadcast(String comando, ConcurrentHashMap<String, String> clientes, String idCliente, PrintWriter salida){
+        private void handlerBroadcast(String comando, ConcurrentHashMap<String, String> clientes, String idCliente, PrintWriter salida, ConcurrentHashMap<String, PrintWriter> clientesSalida){
             String [] divisionComando = comando.split(" ", 2);
             String mensaje = divisionComando[1];
             String remitente = clientes.get(idCliente);
+        
             for(Map.Entry<String, PrintWriter> entry : clientesSalida.entrySet()){
                 if(!entry.getKey().equals(idCliente)){
-                    entry.getValue().println("Broadcast de "+ remitente + ": "+mensaje);    
+                    entry.getValue().println("\nBroadcast de "+ remitente + ": "+mensaje+"\n");    
                 }
-                
+            }   
+        }
+        private void handlerPrivado(String comando, ConcurrentHashMap<String, String> clientes, String idCliente, PrintWriter salida, ConcurrentHashMap<String, PrintWriter> clientesSalida){
+            String [] divisionComando = comando.split(" ", 3);
+            String remitente = clientes.get(idCliente);
+            String destinatario = divisionComando[1];
+            String mensaje = divisionComando[2];
+            String idDestinatario = null;
+
+
+            for(Map.Entry<String, String> entry : clientes.entrySet()){
+                if(entry.getValue().equals(destinatario)){
+                    idDestinatario = entry.getKey();
+                    break;
+                }
             }
+
+            if(idDestinatario == null){
+                salida.println("Error: Cliente "+ destinatario+" no encontrado o no esta conectado");
+                return;
+            }
+
+            clientesSalida.get(idDestinatario).println("\nPrivado de "+ remitente+": "+mensaje+"\n");
         }
     }
 }

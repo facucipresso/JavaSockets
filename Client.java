@@ -21,7 +21,7 @@ public class Client{
             hiloEscucha.start();
 
             while (true) {
-                System.out.println("Ingrese comando:\n -Bienvenida/Despedida <nombre-cliente>\n -Broadcast <mensaje>\n -Exit (si quiere salir)");
+                System.out.println("\nIngrese comando:\n -Bienvenida/Despedida <nombre-cliente>\n -Broadcast <mensaje>\n -Privado <destinatario> <mensaje>\n -Exit (si quiere salir)");
                 String comando = scanner.nextLine();
 
                 salida.println(comando);
@@ -31,6 +31,8 @@ public class Client{
                 }else if (comando.startsWith("Despedida")){
                     manejadorDespedida(entrada);
                 }else if(comando.startsWith("Broadcast")){
+                    manejadorBroadcast(comando);
+                }else if(comando.startsWith("Privado")){
                     manejadorBroadcast(comando);
                 }else if(comando.startsWith("Exit")){
                     manejadorSalida(entrada, miSocket);
