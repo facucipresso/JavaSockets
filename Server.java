@@ -59,6 +59,10 @@ public class Server {
                 clientes.put(idCliente, nombreCliente);
                 clientesSalida.put(idCliente, salida);
 
+                broadcastConection(nombreCliente);
+
+                enviarListaClientesATodos();
+
                 mostrarClientes(clientes);
                 
 
@@ -124,10 +128,19 @@ public class Server {
         private void handlerSalida(PrintWriter salida, ConcurrentHashMap<String, String> clientes, ConcurrentHashMap<String, PrintWriter> clientesSalida, String idCliente)throws IOException{
             salida.println("Cerrando conexion con el cliente");
             salida.println("EOF");
+
+            String nombreCliente = clientes.get(idCliente);
+
             clientes.remove(idCliente);
             clientesSalida.remove(idCliente);
+
             clientSocket.close();
+
+            broadcastDesconexion(nombreCliente);
+
             mostrarClientes(clientes);
+
+            enviarListaClientesATodos();
         }
 
         private void handlerBroadcast(String comando, ConcurrentHashMap<String, String> clientes, String idCliente, PrintWriter salida, ConcurrentHashMap<String, PrintWriter> clientesSalida){
@@ -162,6 +175,34 @@ public class Server {
             }
 
             clientesSalida.get(idDestinatario).println("\nPrivado de "+ remitente+": "+mensaje+"\n");
+        }
+    }
+
+    private static void enviarListaClientes(PrintWriter salida){
+        salida.println("Clientes conectados");
+        for(Map.Entry<String, String> entry : clientes.entrySet()){
+            salida.println("- "+ entry.getValue());
+        }
+        salida.println("EOF");
+    }
+
+    private static void broadcastConection(String nombreCliente){
+        String mensaje = "El cliente "+ nombreCliente+" se ha conectado";
+        for(PrintWriter clienteSalida : clientesSalida.values()){
+            clienteSalida.println(mensaje);
+        }
+    }
+
+    private static void broadcastDesconexion(String nombreCliente){
+        String mensaje = "El cliente "+ nombreCliente+" se ha desconectado";
+        for(PrintWriter clienteSalida : clientesSalida.values()){
+            clienteSalida.println(mensaje);
+        }
+    }
+
+    private static void enviarListaClientesATodos(){
+        for(PrintWriter clienteSalida : clientesSalida.values()){
+            enviarListaClientes(clienteSalida);
         }
     }
 }

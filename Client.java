@@ -16,9 +16,11 @@ public class Client{
             System.out.println("Conectandose al servidor, por favor ingrese su nombre de cliente: ");
             String nombreCliente = scanner.nextLine();
             salida.println(nombreCliente);
-
+            recibirListaClientes(entrada);
             Thread hiloEscucha = new Thread(new BroadcastHandler(miSocket));
             hiloEscucha.start();
+
+            
 
             while (true) {
                 System.out.println("\nIngrese comando:\n -Bienvenida/Despedida <nombre-cliente>\n -Broadcast <mensaje>\n -Privado <destinatario> <mensaje>\n -Exit (si quiere salir)");
@@ -71,9 +73,13 @@ public class Client{
                 String serverMensaje;
             
                 while ((serverMensaje = entrada.readLine()) != null) {
-                    System.out.println(serverMensaje);
+                    if(serverMensaje.equals("Clientes conectados")){
+                        System.out.println("\n"+ serverMensaje);
+                        recibirListaClientes(entrada);
+                    }else if(!serverMensaje.equals("EOF")){
+                        System.out.println(serverMensaje);
+                    } 
                 }
-                
             } catch (Exception e) {
                 System.err.println(e);
             }
@@ -122,6 +128,14 @@ public class Client{
         String [] divisionComando = comando.split(" ", 2);
         String mensaje = divisionComando[1];
 
+    }
+
+    private static void recibirListaClientes (BufferedReader entrada)throws IOException{
+        String line;
+        while((line = entrada.readLine()) != null){
+            if(line.equals("EOF")) break;
+            System.out.println(line);
+        }
     }
 
 }
